@@ -64,6 +64,7 @@ before `futureGetThread.interrupt()` which execute concurrently with `future.com
 `Future get thread lost interrupt status` and exit with error code `1`.
 
 ## OpenJDK code
+* openjdk8: https://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/java/util/concurrent/CompletableFuture.java#l278
 * openjdk9: https://hg.openjdk.java.net/jdk9/sandbox/jdk/file/17f6f01737c2/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
 * openjdk10: https://hg.openjdk.java.net/jdk/jdk10/file/b09e56145e11/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
 * openjdk11: https://hg.openjdk.java.net/jdk/jdk11/file/1ddf9a99e4ad/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
