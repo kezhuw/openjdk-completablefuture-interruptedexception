@@ -1,4 +1,4 @@
-package name.kezhuw.chaos.openjdk11.completablefuture.interruptedexception;
+package name.kezhuw.chaos.openjdk.completablefuture.interruptedexception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

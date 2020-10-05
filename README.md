@@ -52,7 +52,7 @@ The last condition in `if` contains an assignment which could get no null return
 reach here because of interruption, that interruption will be swallow due to no null return value.
 
 ## Demonstration code
-I have added a [maven project](pom.xml) with single file [CompletableFutureGet.java](src/main/java/name/kezhuw/chaos/openjdk11/completablefuture/interruptedexception/CompletableFutureGet.java)
+I have added a [maven project](pom.xml) with single file [CompletableFutureGet.java](src/main/java/name/kezhuw/chaos/openjdk/completablefuture/interruptedexception/CompletableFutureGet.java)
 to demonstrate the problem. You could change `java.version` in [pom.xml](pom.xml) to other versions to check whether this
 problem exists in a particular java version.
 
