@@ -12,6 +12,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CompletableFutureGet {
     private static final Logger logger = LoggerFactory.getLogger("ROOT");
 
+    private static final FutureWaiter futureWaiter;
+
+    static {
+        String method = System.getenv("FUTURE_WAIT_METHOD");
+        if (method == null || method.equalsIgnoreCase("get")) {
+            futureWaiter = CompletableFuture::get;
+        } else if (method.equalsIgnoreCase("join")) {
+            futureWaiter = CompletableFuture::join;
+        } else {
+            String msg = String.format("Invalid FUTURE_WAIT_METHOD value %s, candidates are get and join", method);
+            throw new IllegalArgumentException(msg);
+        }
+    }
+
+    @FunctionalInterface
+    interface FutureWaiter {
+        void wait(CompletableFuture<Void> future) throws InterruptedException, ExecutionException;
+    }
+
     public static void main(String[] args) throws Exception {
         for (int i = 0; ; i++) {
             long sleepMills = ThreadLocalRandom.current().nextLong(10);
@@ -39,7 +58,7 @@ public class CompletableFutureGet {
             CountDownLatch futureGotLatch = new CountDownLatch(1);
             Thread futureGetThread = new Thread(() -> {
                 try {
-                    future.get();
+                    futureWaiter.wait(future);
                     while (!interrupted.get()) {
                         Thread.yield();
                     }
@@ -54,7 +73,7 @@ public class CompletableFutureGet {
                     // Thread.currentThread().interrupt();
                     logger.info("future.get() got interrupted");
                     try {
-                        future.get();
+                        futureWaiter.wait(future);
                     } catch (Exception ex1) {
                         logger.error("Got unexpected exception", ex);
                     }

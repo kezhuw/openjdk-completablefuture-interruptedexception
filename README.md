@@ -114,6 +114,8 @@ to demonstrate the problem. You can use following steps to verify whether the pr
 1. Configure your java env to java 1.8 or java 9 to 15.
 2. `mvn clean package` in project directory.
 3. `java -jar target/openjdk-completablefuture-interruptedexception-0.1.0-SNAPSHOT.jar` in project directory.
+   You can use environment variable `FUTURE_WAIT_METHOD` to switch between `CompletableFuture.get`(using `get`) and
+   `CompletableFuture.join`(using `join`), it defaults to `get`.
 
 In openjdk 1.8, the last step run indefinitely with no error. In openjdk 9 or above, when there is no `Thread.sleep`
 before `futureGetThread.interrupt()` which execute concurrently with `future.complete`, it probably will print error log
