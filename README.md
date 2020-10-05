@@ -53,12 +53,22 @@ reach here because of interruption, that interruption will be swallow due to no 
 
 ## Demonstration code
 I have added a [maven project](pom.xml) with single file [CompletableFutureGet.java](src/main/java/name/kezhuw/chaos/openjdk/completablefuture/interruptedexception/CompletableFutureGet.java)
-to demonstrate the problem. You could change `java.version` in [pom.xml](pom.xml) to other versions to check whether this
-problem exists in a particular java version.
+to demonstrate the problem. You can use following steps to verify whether the problem exist in particular java version.
+
+1. Configure your java env to java 1.8 or java 9 to 15.
+2. `mvn clean package` in project directory.
+3. `java -jar target/openjdk-completablefuture-interruptedexception-0.1.0-SNAPSHOT.jar` in project directory.
+
+In openjdk 1.8, the last step run indefinitely with no error. In openjdk 9 or above, when there is no `Thread.sleep`
+before `futureGetThread.interrupt()` which execute concurrently with `future.complete`, it probably will print error log
+`Future get thread lost interrupt status` and exit with error code `1`.
 
 ## OpenJDK code
-* openjdk9: https://hg.openjdk.java.net/jdk9/sandbox/jdk/file/17f6f01737c2/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java
-* openjdk10: https://hg.openjdk.java.net/jdk/jdk10/file/b09e56145e11/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java
-* openjdk11: https://hg.openjdk.java.net/jdk/jdk11/file/1ddf9a99e4ad/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1809
-* openjdk15: https://hg.openjdk.java.net/jdk/jdk15/file/0dabbdfd97e6/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1873
-* openjdk current: https://hg.openjdk.java.net/jdk/jdk/file/ee1d592a9f53/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1873
+* openjdk9: https://hg.openjdk.java.net/jdk9/sandbox/jdk/file/17f6f01737c2/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
+* openjdk10: https://hg.openjdk.java.net/jdk/jdk10/file/b09e56145e11/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
+* openjdk11: https://hg.openjdk.java.net/jdk/jdk11/file/1ddf9a99e4ad/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
+* openjdk12: https://hg.openjdk.java.net/jdk/jdk12/file/06222165c35f/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1876
+* openjdk13: https://hg.openjdk.java.net/jdk/jdk13/file/0368f3a073a9/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1876
+* openjdk14: https://hg.openjdk.java.net/jdk/jdk14/file/6c954123ee8d/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1869
+* openjdk15: https://hg.openjdk.java.net/jdk/jdk15/file/0dabbdfd97e6/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1869
+* openjdk current: https://hg.openjdk.java.net/jdk/jdk/file/ee1d592a9f53/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1869
