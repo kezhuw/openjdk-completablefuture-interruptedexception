@@ -8,51 +8,107 @@ In following sections, I use code from openjdk11. After glimpsing of openjdk rep
 
 ## `CompletableFuture.waitingGet` should keep interrupt status if it returns no null value
 
+Let's start with `CompletableFuture.get` and `CompletableFuture.reportGet` to get constraints
+`CompletableFuture.waitingGet` must follow.
+
 ```java
-    /**
-     * Returns raw result after waiting, or null if interruptible and
-     * interrupted.
-     */
-    private Object waitingGet(boolean interruptible) {
-        Signaller q = null;
-        boolean queued = false;
-        Object r;
-        while ((r = result) == null) {
-            if (q == null) {
-                q = new Signaller(interruptible, 0L, 0L);
-                if (Thread.currentThread() instanceof ForkJoinWorkerThread)
-                    ForkJoinPool.helpAsyncBlocker(defaultExecutor(), q);
-            }
-            else if (!queued)
-                queued = tryPushStack(q);
-            else {
-                try {
-                    ForkJoinPool.managedBlock(q);
-                } catch (InterruptedException ie) { // currently cannot happen
-                    q.interrupted = true;
-                }
-                if (q.interrupted && interruptible)
-                    break;
-            }
-        }
-        if (q != null && queued) {
-            q.thread = null;
-            if (!interruptible && q.interrupted)
-                Thread.currentThread().interrupt();
-            if (r == null)
-                cleanStack();
-        }
-        if (r != null || (r = result) != null)
-            postComplete();
-        return r;
+public T get() throws InterruptedException, ExecutionException {
+    Object r;
+    if ((r = result) == null)
+        r = waitingGet(true);
+    return (T) reportGet(r);
+}
+
+/**
+ * Reports result using Future.get conventions.
+ */
+private static Object reportGet(Object r)
+    throws InterruptedException, ExecutionException {
+    if (r == null) // by convention below, null means interrupted
+        throw new InterruptedException();
+    if (r instanceof AltResult) {
+        Throwable x, cause;
+        if ((x = ((AltResult)r).ex) == null)
+            return null;
+        if (x instanceof CancellationException)
+            throw (CancellationException)x;
+        if ((x instanceof CompletionException) &&
+            (cause = x.getCause()) != null)
+            x = cause;
+        throw new ExecutionException(x);
     }
+    return r;
+}
 ```
 
-The last condition in `if` contains an assignment which could get no null return value, if calling thread
-reach here because of interruption, that interruption will be swallow due to no null return value.
+The single parameter of `reportGet` comes from `waitingGet` and `reportGet` throws `InterruptedException`
+if and only if its parameter is `null`. This means that if waiting future is interrupted and completed at
+the same time in `CompletableFuture.waitingGet`, it has only two choices:
+1. Return null and clear interrupt status, otherwise we will get double-interruption.
+2. Return no-null value and keep interrupt status, otherwise we will lose that interruption and later
+  interruptible method may hang.
+
+Let's see whether, `waitingGet` conforms to rule-2 if it returns no-null value.
+
+```java
+/**
+ * Returns raw result after waiting, or null if interruptible and
+ * interrupted.
+ */
+private Object waitingGet(boolean interruptible) {
+    Signaller q = null;
+    boolean queued = false;
+    Object r;
+    while ((r = result) == null) {
+        if (q == null) {
+            q = new Signaller(interruptible, 0L, 0L);
+            if (Thread.currentThread() instanceof ForkJoinWorkerThread)
+                ForkJoinPool.helpAsyncBlocker(defaultExecutor(), q);
+        }
+        else if (!queued)
+            queued = tryPushStack(q);
+        else {
+            try {
+                ForkJoinPool.managedBlock(q);
+            } catch (InterruptedException ie) { // currently cannot happen
+                q.interrupted = true;
+            }
+            if (q.interrupted && interruptible)
+                // tag(interrupted): `ForkJoinPool.managedBlock` return due to interrupted,
+                // interrupt status was cleared.
+                break;
+        }
+    }
+    if (q != null && queued) {
+        q.thread = null;
+        // tag(self-interrupt): this applies only to `CompletableFuture.join`.
+        if (!interruptible && q.interrupted)
+            Thread.currentThread().interrupt();
+        if (r == null)
+            cleanStack();
+    }
+    if (r != null || (r = result) != null)      // tag(assignment)
+        postComplete();
+    return r;
+}
+```
+
+I add three placeholders `tag(interrupted)`, `tag(self-interrupt)` and `tag(assignment)` in comments. Here
+are execution steps and assumptions:
+
+* Let's assume that an interruption occurs before `tag(interrupted)` and future completion, then
+  `tag(interrupted)` will break while-loop in `CompletableFuture.get` path with interrupt status cleared.
+
+* `if` block in `tag(self-interrupt)` applies only to `CompletableFuture.join` which is a no interruptible
+  blocking method, it restores interrupt status if interruption occurs in blocking wait. It is skipped in
+  `CompletableFuture.get` path.
+
+* `(r = result) != null` in `tag(assignment)` assign `result` to return value and check it. What if the future
+  is completed by other thread before `tag(assingment)` ? `result` field will have no-null value, then `waitingGet`
+  will return no-null value, and lose interrupt status in `q.interrupted`.
 
 ## Demonstration code
-I have added a [maven project](pom.xml) with single file [CompletableFutureGet.java](src/main/java/name/kezhuw/chaos/openjdk/completablefuture/interruptedexception/CompletableFutureGet.java)
+I have added a ready-to-run [maven project](pom.xml) with single file [CompletableFutureGet.java](src/main/java/name/kezhuw/chaos/openjdk/completablefuture/interruptedexception/CompletableFutureGet.java)
 to demonstrate the problem. You can use following steps to verify whether the problem exist in particular java version.
 
 1. Configure your java env to java 1.8 or java 9 to 15.
