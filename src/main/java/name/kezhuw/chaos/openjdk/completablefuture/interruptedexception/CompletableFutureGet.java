@@ -1,8 +1,6 @@
 package name.kezhuw.chaos.openjdk.completablefuture.interruptedexception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.PrintStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -10,7 +8,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CompletableFutureGet {
-    private static final Logger logger = LoggerFactory.getLogger("ROOT");
+    private static final PrintStream stdout = System.out;
+    private static final PrintStream stderr = System.err;
 
     private static final FutureWaiter futureWaiter;
 
@@ -34,7 +33,7 @@ public class CompletableFutureGet {
     public static void main(String[] args) throws Exception {
         for (int i = 0; ; i++) {
             long sleepMills = ThreadLocalRandom.current().nextLong(10);
-            logger.info("{}: sleep mills: {}", i, sleepMills);
+            stdout.format("%d: sleep mills: %d\n", i, sleepMills);
 
             CompletableFuture<Void> future = new CompletableFuture<>();
             AtomicBoolean interrupted = new AtomicBoolean();
@@ -48,7 +47,8 @@ public class CompletableFutureGet {
                     startLatch.await();
                     future.complete(null);
                 } catch (InterruptedException ex) {
-                    logger.error("Got unexpected interrupted exception in future complete thread", ex);
+                    stdout.println("Got unexpected interrupted exception in future complete thread");
+                    ex.printStackTrace();
                     System.exit(128);
                 }
             });
@@ -64,21 +64,23 @@ public class CompletableFutureGet {
                     }
                     // XXX: Test whether interrupt status was lost.
                     if (Thread.currentThread().isInterrupted()) {
-                        logger.info("Future get thread was interrupted.");
+                        stdout.println("Future get thread was interrupted.");
                     } else {
-                        logger.error("Future get thread lost interrupt status");
+                        stderr.println("Future get thread lost interrupt status");
                         System.exit(1);
                     }
                 } catch (InterruptedException ex) {
                     // Thread.currentThread().interrupt();
-                    logger.info("future.get() got interrupted");
+                    stdout.println("future.get() got interrupted");
                     try {
                         futureWaiter.wait(future);
                     } catch (Exception ex1) {
-                        logger.error("Got unexpected exception", ex);
+                        stderr.println("Got unexpected exception");
+                        ex.printStackTrace();
                     }
                 } catch (ExecutionException ex) {
-                    logger.error("Got unexpected execution exception", ex);
+                    stderr.println("Got unexpected execution exception");
+                    ex.printStackTrace();
                     System.exit(128);
                 }
                 futureGotLatch.countDown();
