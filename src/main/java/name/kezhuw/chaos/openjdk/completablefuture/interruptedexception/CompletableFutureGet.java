@@ -13,6 +13,8 @@ public class CompletableFutureGet {
 
     private static final FutureWaiter futureWaiter;
 
+    private static final int maxRuns;
+
     static {
         String method = System.getenv("FUTURE_WAIT_METHOD");
         if (method == null || method.equalsIgnoreCase("get")) {
@@ -25,13 +27,25 @@ public class CompletableFutureGet {
         }
     }
 
+    static {
+        String value = System.getenv("MAX_RUNS");
+        if (value == null) {
+            maxRuns = 1000;
+        } else {
+            maxRuns = Integer.parseInt(value, 10);
+            if (maxRuns <= 0) {
+                throw new IllegalArgumentException("Environment variable MAX_RUNS must greater than 0");
+            }
+        }
+    }
+
     @FunctionalInterface
     interface FutureWaiter {
         void wait(CompletableFuture<Void> future) throws InterruptedException, ExecutionException;
     }
 
     public static void main(String[] args) throws Exception {
-        for (int i = 0; ; i++) {
+        for (int i = 0; i < maxRuns; i++) {
             long sleepMills = ThreadLocalRandom.current().nextLong(10);
             stdout.format("%d: sleep mills: %d\n", i, sleepMills);
 
