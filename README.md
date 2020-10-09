@@ -123,6 +123,12 @@ In openjdk 1.8, the last step runs out loop count with no error. In openjdk 9 or
 between `futureGetThread.interrupt()` and `future.complete(null)`, it probably will print error log
 `future.get completes, Thread.isInterrupted returns false` and exit with error code `1`.
 
+## Online REPL
+* See [openjdk8-completablefuture-interruptedexception](https://repl.it/@kezhuw/openjdk8-completablefuture-interruptedexception)
+  for openjdk8.
+* See [openjdk11-completablefuture-interruptedexception](https://repl.it/@kezhuw/openjdk11-completablefuture-interruptedexception)
+  for openjdk11.
+
 ## OpenJDK code
 * openjdk8: https://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/java/util/concurrent/CompletableFuture.java#l278
 * openjdk9: https://hg.openjdk.java.net/jdk9/sandbox/jdk/file/17f6f01737c2/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java#l1805
