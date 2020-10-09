@@ -119,9 +119,9 @@ to demonstrate the problem. You can use following steps to verify whether the pr
      it defaults to `get`.
    * `MAX_RUNS` to limit max loop count, it defaults to 1000.
 
-In openjdk 1.8, the last step run indefinitely with no error. In openjdk 9 or above, when there is no `Thread.sleep`
-before `futureGetThread.interrupt()` which execute concurrently with `future.complete`, it probably will print error log
-`Future get thread lost interrupt status` and exit with error code `1`.
+In openjdk 1.8, the last step runs out loop count with no error. In openjdk 9 or above, when there is no `Thread.sleep`
+between `futureGetThread.interrupt()` and `future.complete(null)`, it probably will print error log
+`future.get completes, Thread.isInterrupted returns false` and exit with error code `1`.
 
 ## OpenJDK code
 * openjdk8: https://hg.openjdk.java.net/jdk8/jdk8/jdk/file/687fd7c7986d/src/share/classes/java/util/concurrent/CompletableFuture.java#l278
