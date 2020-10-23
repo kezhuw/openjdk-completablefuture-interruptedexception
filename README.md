@@ -4,6 +4,9 @@ In investigating of [FLINK-19489 SplitFetcherTest.testNotifiesWhenGoingIdleConcu
 with [commit tree](https://github.com/flink-ci/flink-mirror/tree/f8cc82b0c7d3ddd35b17c7f6475b8908363c930a),
 I found that `CompletableFuture.get` could swallow `InterruptedException` if waiting future completes immediately after `Thread.interrupt`.
 
+## OpenJDK bug tracking
+I have reported this to OpenJDK team, and they have accepted it as [JDK-8254350](https://bugs.openjdk.java.net/browse/JDK-8254350).
+
 In following sections, I use code from openjdk11. After glimpsing of openjdk repository, I think this problem may apply to openjdk9 and all above.
 
 ## `CompletableFuture.waitingGet` should keep interrupt status if it returns no null value
