@@ -115,8 +115,8 @@ to demonstrate the problem. You can use following steps to verify whether the pr
 2. `mvn clean package` in project directory.
 3. `java -jar target/openjdk-completablefuture-interruptedexception-0.1.0-SNAPSHOT.jar` in project directory. The built
    executable has following environment variables to custom:
-   * `FUTURE_WAIT_METHOD` to switch between `CompletableFuture.get`(using `get`) and `CompletableFuture.join`(using `join`),
-     it defaults to `get`.
+   * `FUTURE_WAIT_METHOD` to switch among `CompletableFuture.get()`(using `get`), `CompletableFuture.get(long timeout, TimeUnit unit)`(using `timed_get`)
+     and `CompletableFuture.join()`(using `join`), it defaults to `get`.
    * `MAX_RUNS` to limit max loop count, it defaults to 1000.
 
 In openjdk 1.8, the last step runs out loop count with no error. In openjdk 9 or above, when there is no `Thread.sleep`

@@ -5,6 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class CompletableFutureGet {
     private static final PrintStream stdout = System.out;
@@ -18,13 +20,24 @@ public class CompletableFutureGet {
     static {
         String method = System.getenv("FUTURE_WAIT_METHOD");
         if (method == null || method.equalsIgnoreCase("get")) {
-            futureMethod = "get";
+            futureMethod = "get()";
             futureWaiter = CompletableFuture::get;
+        } else if (method.equalsIgnoreCase("timed_get")) {
+            futureMethod = "get(1000, TimeUnit.DAYS)";
+            futureWaiter = (CompletableFuture<Void> future) -> {
+                try {
+                    future.get(1000, TimeUnit.DAYS);
+                } catch (TimeoutException ex) {
+                    stderr.println("Got unexpected exception");
+                    ex.printStackTrace();
+                    System.exit(128);
+                }
+            };
         } else if (method.equalsIgnoreCase("join")) {
-            futureMethod = "join";
+            futureMethod = "join()";
             futureWaiter = CompletableFuture::join;
         } else {
-            String msg = String.format("Invalid FUTURE_WAIT_METHOD value %s, candidates are get and join", method);
+            String msg = String.format("Invalid FUTURE_WAIT_METHOD value %s, candidates are get, timed_get and join", method);
             throw new IllegalArgumentException(msg);
         }
     }
